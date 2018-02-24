@@ -38,12 +38,12 @@ fun getAllEmojis() {
     val emojiListElement = ulElements?.get(2)
     val emojiElements = emojiListElement?.getElementsByTag("li")
     list.clear()
-    run breaking@{
+    run breaking@{//这是设置到某个值时可以直接break的
         emojiElements?.forEach { e ->
             val href = e?.getElementsByTag("a")?.first()?.attr("abs:href")
             val text = e?.getElementsByClass("emoji")?.text()
             list.add(Emoji(text, href))
-            if ("\uD83E\uDD13".equals(text)) return@breaking
+            if ("\uD83E\uDD13".equals(text)) return@breaking//这是设置到某个值时可以直接break的
         }
     }
 }
