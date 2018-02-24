@@ -2,21 +2,21 @@ package crawler
 
 import org.jsoup.Jsoup
 import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
 import java.lang.StringBuilder
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.*
+import java.util.concurrent.Executors
 
+val excutor = Executors.newFixedThreadPool(4)
 val list = ArrayList<Emoji>()
 lateinit var string: StringBuilder
 
 fun main(args: Array<String>) {
     getAllEmojis()
     string = StringBuilder("\"")
-    list.forEach { emoji ->
-        getDetailEmoji(emoji);
+    list.forEachIndexed { index, emoji ->
+        excutor.execute { getDetailEmoji(emoji); }
     }
 }
 
