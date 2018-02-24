@@ -8,7 +8,18 @@ import java.net.URL
 import java.util.*
 import java.util.concurrent.Executors
 
-val excutor = Executors.newFixedThreadPool(4)
+// ---------------------------------------------
+//预设2中风格
+val APPALE_STYLE = 0
+val GOOGLE_STYLE = 1;
+
+//风格
+val STYLE = GOOGLE_STYLE
+//线程数
+val THREADS = 16
+// ---------------------------------------------
+
+val excutor = Executors.newFixedThreadPool(THREADS)
 val list = ArrayList<Emoji>()
 lateinit var string: StringBuilder
 
@@ -27,10 +38,13 @@ fun getAllEmojis() {
     val emojiListElement = ulElements?.get(2)
     val emojiElements = emojiListElement?.getElementsByTag("li")
     list.clear()
-    emojiElements?.forEach { e ->
-        val href = e?.getElementsByTag("a")?.first()?.attr("abs:href")
-        val text = e?.getElementsByClass("emoji")?.text()
-        list.add(Emoji(text, href))
+    run breaking@{
+        emojiElements?.forEach { e ->
+            val href = e?.getElementsByTag("a")?.first()?.attr("abs:href")
+            val text = e?.getElementsByClass("emoji")?.text()
+            list.add(Emoji(text, href))
+            if ("\uD83E\uDD13".equals(text)) return@breaking
+        }
     }
 }
 
@@ -38,7 +52,7 @@ fun getAllEmojis() {
 fun getDetailEmoji(emoji: Emoji?) {
     val specificEmoji = Jsoup.connect(emoji?.href)?.get()
     val apple = specificEmoji?.select("html body div.container div.content article section.vendor-list ul li div.vendor-container.vendor-rollout-target div.vendor-image img")
-            ?.first()
+            ?.get(STYLE)
     val lowerCase = StringUtil.string2Unicode(emoji?.name)?.toLowerCase()
     val url = apple?.attr("src")
     val name = lowerCase?.replace('\\', '_')
@@ -62,7 +76,12 @@ fun saveImage(name: String?, imageUrl: String?) {
     } catch (e: Throwable) {
         e.printStackTrace()
     }
-    println("down $imageUrl to $file already")
+    if (connect?.contentLength?.toLong() == file.length()) {
+        println("down $imageUrl to $file already")
+    }else {
+        println("file seem not down right, re-download")
+        saveImage(name, imageUrl)
+    }
 }
 
 //保存名称到文本文件
