@@ -2,6 +2,8 @@ package crawler
 
 import org.jsoup.Jsoup
 import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.lang.StringBuilder
 import java.net.HttpURLConnection
 import java.net.URL
@@ -9,6 +11,7 @@ import java.util.*
 import java.util.concurrent.Executors
 
 // ---------------------------------------------
+val BUFFER_SIZE = 1024;
 //预设2中风格
 val APPALE_STYLE = 0
 val GOOGLE_STYLE = 1;
@@ -38,12 +41,13 @@ fun getAllEmojis() {
     val emojiListElement = ulElements?.get(2)
     val emojiElements = emojiListElement?.getElementsByTag("li")
     list.clear()
-    run breaking@{//这是设置到某个值时可以直接break的
+    run breaking@ {
+        //这是设置到某个值时可以直接break的
         emojiElements?.forEach { e ->
             val href = e?.getElementsByTag("a")?.first()?.attr("abs:href")
             val text = e?.getElementsByClass("emoji")?.text()
             list.add(Emoji(text, href))
-            if ("\uD83E\uDD13".equals(text)) return@breaking//这是设置到某个值时可以直接break的
+            //if ("\uD83E\uDD13".equals(text)) return@breaking//这是设置到某个值时可以直接break的
         }
     }
 }
@@ -70,15 +74,10 @@ fun saveImage(name: String?, imageUrl: String?) {
     }
     val connect = URL(imageUrl).openConnection() as? HttpURLConnection
     val inputStream = connect?.inputStream
-    FileUtil.save(inputStream, file)
-    try {
-        inputStream?.close()
-    } catch (e: Throwable) {
-        e.printStackTrace()
-    }
+    streamToFile(inputStream, file)
     if (connect?.contentLength?.toLong() == file.length()) {
         println("down $imageUrl to $file already")
-    }else {
+    } else {
         println("file seem not down right, re-download")
         saveImage(name, imageUrl)
     }
@@ -89,5 +88,21 @@ fun saveName(name: String?) {
     string.append(name).append('"').append(',').append('"')
     val file = File("emoji/emojis.txt")
     file.deleteOnExit()
-    FileUtil.save(string.toString().byteInputStream(), file)
+    val byteInputStream = string.toString().byteInputStream()
+    streamToFile(byteInputStream, file)
+}
+
+fun streamToFile(inputStream: InputStream?, file: File?) {
+    val outputStream = FileOutputStream(file)
+    inputStream?.copyTo(outputStream, BUFFER_SIZE)
+    try {
+        inputStream?.close()
+    } catch (e: Throwable) {
+        e.printStackTrace()
+    }
+    try {
+        outputStream.close()
+    } catch (e: Throwable) {
+        e.printStackTrace()
+    }
 }
