@@ -68,9 +68,9 @@ fun getDetailEmoji(emoji: Emoji?) {
     saveName(lowerCase)
     if (lowerCase != null) name_list.add(lowerCase)
     if (name_list.size == emoji_list.size) {
-        val generateRegex = generateRegex(name_list.sorted())
+        val regex = generateRegex(name_list.sorted())
         val file = File("emoji/regex.txt")
-        streamToFile(generateRegex.byteInputStream(), file)
+        streamToFile(regex.byteInputStream(), file)
     }
 }
 
@@ -117,11 +117,14 @@ fun streamToFile(inputStream: InputStream?, file: File?) {
     }
 }
 
-fun generateRegex(emojis: List<String>) :String{
+fun generateRegex(emojis: List<String>): String {
     val map = linkedMapOf<String, Int>()
     emojis.forEach {
         var c = 0
-        it.toCharArray().forEach { c += it.toInt() }
+        val hex = it.split("\\u")
+        for (index in 1 until hex.size){
+            c += Integer.parseInt(hex[index], 16)
+        }
         map.put(it, c)
     }
     val regex = StringBuilder().append('[')
@@ -133,13 +136,14 @@ fun generateRegex(emojis: List<String>) :String{
             regex.append(append)
         } else {
             if (code - lastCode == 1) {
-                val lastIndexOf = regex.lastIndexOf('-')
-                if (lastIndexOf == regex.length - 1) {
+                val lastIndexOf_ = regex.lastIndexOf('-')
+                val lastIndexOf1 = regex.lastIndexOf('|')
+                if (lastIndexOf_ == regex.length - 1) {
                     regex.append(append)
-                } else if (lastIndexOf == -1) {
+                } else if (lastIndexOf_ == -1 || lastIndexOf1 >= lastIndexOf_) {
                     regex.append('-').append(append)
                 } else {
-                    regex.replace(lastIndexOf + 1, regex.length, "$append")
+                    regex.replace(lastIndexOf_ + 1, regex.length, "$append")
                 }
             } else {
                 regex.append('|').append(append)
